@@ -1,0 +1,153 @@
+<html>
+  <head>
+    <title>Simple Chat Application</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css"
+    />
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <!-- <script src="http://code.jquery.com/jquery-1.6.1.min.js"></!-->
+    -->
+
+    <style>
+      body {
+        margin-top: 60px;
+      }
+      #msgArea {
+        display: none;
+      }
+      .well{
+        outline: #800080 solid 1px;
+        border: 3px solid #0000;
+        margin-top:20px";
+      }
+      .chat{
+          padding : 50px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div>
+        <h1
+          style="text-align:center;outline: #800080 solid 5px;margin: auto; width: 60%; padding: 20px; border: 3px solid #0000;"
+        >
+          Simple Chat Application
+        </h1>
+      </div>
+      <div id="userArea" class="row">
+        <div
+          class="col-md-12"
+          style="margin: auto; width: 60%; padding: 20px; outline: #800080 solid 5px; border: 3px solid #0000; margin-left: 230px;margin-top:30px;"
+        >
+          <form id="userForm">
+            <div class="form-group">
+              <label>Enter Name</label>
+              <input class="form-control" id="username" />
+              <br />
+              <input
+                type="submit"
+                class="btn btn-success"
+                style="background-color: white; color: black; border: 2px solid #800080;"
+                value="Login"
+              />
+            </div>
+          </form>
+        </div>
+      </div>
+      <div Id="msgArea" class="row">
+        <div class="col-md-4">
+          <div clas="well">
+            <h3>
+              <i>Online Budies</i>
+            </h3>
+            <ul
+              class="list-group"
+              id="users"
+              style=" outline: #800080 solid 5px; border: 3px solid #0000; padding: 30px"
+            ></ul>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="chat" id="chat"></div>
+          <form id="messageForm">
+            <div class="form-group">
+              <textarea
+                class="form-control"
+                id="message"
+                style=" outline: #800080 solid 5px; border: 3px solid #0000;margin-top:60px"
+                placeholder="Chat here.."
+              >
+              </textarea>
+              <br />
+              <input
+                type="submit"
+                class="btn btn-primary"
+                style="background-color: white; color: black; border: 2px solid #800080;"
+                value="send message"
+              />
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script>
+      var socket = io.connect();
+      var [
+        messageForm,
+        message,
+        chat,
+        msgArea,
+        userArea,
+        userForm,
+        users,
+        username
+      ] = [
+        "messageForm",
+        "message",
+        "chat",
+        "msgArea",
+        "userArea",
+        "userForm",
+        "users",
+        "username"
+      ].map(e => document.querySelector(`#${e}`));
+      messageForm.onsubmit = e => {
+        e.preventDefault();
+        socket.emit("send message", message.value);
+        message.value = "";
+      };
+
+      socket.on("new message", function(data) {
+        let div = document.createElement("div");
+        div.classList.add("well");
+        let usernode = document.createElement("strong");
+        let username = document.createTextNode(data.user);
+        let message = document.createTextNode(data.msg);
+        usernode.appendChild(username);
+        div.appendChild(usernode);
+        div.appendChild(message);
+        chat.appendChild(div);
+      });
+
+      userForm.onsubmit = e => {
+        e.preventDefault();
+        socket.emit("new user", username.value, function(data) {
+          if (data) {
+            userArea.style.display = "none";
+            msgArea.style.display = "block";
+          }
+        });
+        username.value = "";
+      };
+
+      socket.on("get users", function(data) {
+        let html = "";
+        data.map(
+          user => (html += `<li class="list-group-item"> ${user}  </li>`)
+        );
+        users.innerHTML = html;
+      });
+    </script>
+  </body>
+</html>
